@@ -1,0 +1,3 @@
+struct Streamer {}
+
+struct Sub {}

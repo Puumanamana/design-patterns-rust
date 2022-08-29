@@ -1,47 +1,60 @@
-pub trait Notification {
-    fn notify_user(&self) {}
+pub trait Container {
+    fn pull_from_registry(&self) {}
+    fn describe(&self) {}
 }
 
-struct Email {}
-impl Notification for Email {
-    fn notify_user(&self) {
-        println!("Email sent");
+pub struct DockerContainer {
+    img: String,
+    registry: String
+        
+}
+
+pub struct SingularityContainer {
+    img: String,
+    registry: String
+}
+
+impl Container for DockerContainer {
+    fn pull_from_registry(&self) {
+        println!("Pulling {} from {}", self.img, self.registry);
     }
 }
 
-struct SMS {}
-impl Notification for SMS {
-    fn notify_user(&self) {
-        println!("SMS sent");
+impl Container for SingularityContainer {
+    fn pull_from_registry(&self) {
+        println!("Pulling {} from {}", self.img, self.registry);
     }
 }
 
-struct Push {}
-impl Notification for Push {
-    fn notify_user(&self) {
-        println!("Push sent");
+pub trait ContainerFactory {
+    type Object;
+
+    fn create(_img: &str) -> Box<Self::Object> { unimplemented!() }
+}
+
+pub struct DockerFactory{}
+
+impl ContainerFactory for DockerFactory {
+    type Object = DockerContainer;
+    
+    fn create(img: &str) -> Box<Self::Object> {
+        Box::new(DockerContainer{
+            img: img.to_string(),
+            registry: "https://hub.docker.com/".to_string()
+        })
     }
 }
 
-pub enum NotificationType {
-    Email,
-    SMS,
-    Push
-}
+pub struct SingularityFactory{}
 
-pub trait NotificationService {
-    fn create_notification(&self) {}
-}
-
-pub struct NotificationFactory {}
-
-impl NotificationFactory {
-    pub fn create_notification(notif: NotificationType) -> Box<dyn Notification> {
-        match notif {
-            NotificationType::Email => Box::new(Email {}),
-            NotificationType::SMS => Box::new(SMS {}),
-            NotificationType::Push => Box::new(Push {}),
-        }
+impl ContainerFactory for SingularityFactory {
+    type Object = SingularityContainer;
+    
+    fn create(img: &str) -> Box<Self::Object> {
+        Box::new(SingularityContainer{
+            img: img.to_string(),
+            registry: "https://singularityhub.com".to_string()
+        })
     }
 }
 
@@ -50,8 +63,9 @@ mod tests {
     use super::*;
     
     #[test]
-    fn test_push() {
-        let push_notif = NotificationFactory::create_notification(NotificationType::Push);
-        assert!(true);
+    fn test_default() {
+        let container = DockerFactory::create("hello-world");
+        container.pull_from_registry();
+        assert!(container.img.contains("hello"));
     }
 }
